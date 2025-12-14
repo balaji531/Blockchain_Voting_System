@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+/* ------------------------------
+   GLOBAL ANIMATIONS + EFFECTS
+--------------------------------*/
+
+/* Smooth fade-slide for cards */
+.fade-slide {
+    animation: fadeSlideUp 0.7s ease forwards;
+    opacity: 0;
+}
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Glassmorphism hover glow */
+.card-hover {
+    transition: 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+.card-hover:hover {
+    box-shadow: 0 0 25px rgba(0, 150, 255, 0.4);
+    transform: translateY(-5px);
+}
+
+/* Stagger animation for each table row */
+tbody tr {
+    opacity: 0;
+    animation: rowFade 0.5s ease forwards;
+}
+tbody tr:nth-child(1) { animation-delay: 0.1s; }
+tbody tr:nth-child(2) { animation-delay: 0.2s; }
+tbody tr:nth-child(3) { animation-delay: 0.3s; }
+tbody tr:nth-child(4) { animation-delay: 0.4s; }
+tbody tr:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes rowFade {
+    from { opacity: 0; transform: translateX(-15px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Ripple Button Effect */
+.btn-ripple {
+    position: relative;
+    overflow: hidden;
+}
+.btn-ripple::after {
+    content: "";
+    position: absolute;
+    background: rgba(255,255,255,0.4);
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    transform: scale(0);
+    opacity: 0;
+    transition: 0.4s;
+}
+.btn-ripple:active::after {
+    width: 200px;
+    height: 200px;
+    opacity: 1;
+    transform: scale(1);
+    top: var(--y);
+    left: var(--x);
+}
+
+/* Disable button when loading */
+.loading-btn {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+.loading-btn::after {
+    content: "⏳";
+    position: absolute;
+    right: -25px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+</style>
+
+<script>
+// Ripple animation handler
+document.addEventListener("click", function(e) {
+    if (e.target.classList.contains("btn-ripple")) {
+        let rect = e.target.getBoundingClientRect();
+        e.target.style.setProperty("--x", `${e.clientX - rect.left}px`);
+        e.target.style.setProperty("--y", `${e.clientY - rect.top}px`);
+    }
+});
+
+// Loading animation for action buttons
+function startLoading(btn) {
+    btn.classList.add("loading-btn");
+}
+</script>
+
+<div class="container py-4">
+
+    <h2 class="fw-bold mb-4 text-primary fade-slide">
+        <i class="bi bi-speedometer2"></i> Admin Dashboard
+    </h2>
+
+    <!-- ADD CANDIDATE CARD -->
+    <div class="card shadow-sm card-hover fade-slide mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-person-plus-fill"></i> Add Candidate</h5>
+        </div>
+
+        <div class="card-body">
+            <form method="POST">
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Name</label>
+                        <input name="name" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Party</label>
+                        <input name="party" class="form-control">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Age</label>
+                        <input type="number" name="age" class="form-control">
+                    </div>
+
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">Qualification</label>
+                        <input name="qualification" class="form-control">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea name="description" class="form-control"></textarea>
+                    </div>
+
+                    <div class="col-12 form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="is_verified" id="verify">
+                        <label class="form-check-label fw-semibold" for="verify">
+                            Verified Candidate
+                        </label>
+                    </div>
+
+                </div>
+
+                <button class="btn btn-primary mt-3 px-4 btn-ripple">
+                    <i class="bi bi-check2-circle"></i> Add Candidate
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- EXISTING CANDIDATES -->
+    <div class="card shadow-sm card-hover fade-slide mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-people-fill"></i> Existing Candidates</h5>
+        </div>
+
+        <div class="card-body table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Party</th>
+                        <th>Age</th>
+                        <th>Qualification</th>
+                        <th>Verified</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for c in candidates %}
+                    <tr>
+                        <td class="fw-semibold">{{ c.name }}</td>
+                        <td>{{ c.party }}</td>
+                        <td>{{ c.age }}</td>
+                        <td>{{ c.qualification }}</td>
+
+                        <td>
+                            {% if c.is_verified %}
+                                <span class="badge bg-success">Yes</span>
+                            {% else %}
+                                <span class="badge bg-danger">No</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <a href="{{ url_for('edit_candidate', candidate_id=c.id) }}"
+                               class="btn btn-warning btn-sm btn-ripple">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </a>
+
+                            <form method="POST"
+                                action="{{ url_for('delete_candidate', candidate_id=c.id) }}"
+                                style="display:inline;">
+                                <button class="btn btn-danger btn-sm btn-ripple">
+                                    <i class="bi bi-trash-fill"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+    <!-- ELECTION CONTROL -->
+    <div class="card shadow-sm card-hover fade-slide mb-4">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0"><i class="bi bi-broadcast-pin"></i> Election Control</h5>
+        </div>
+        <div class="card-body">
+
+            {% if election and election.is_active %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle-fill"></i> Election is ACTIVE
+                </div>
+                <form method="POST" action="{{ url_for('stop_election') }}">
+                    <button class="btn btn-danger btn-ripple"
+                            onclick="startLoading(this)">
+                        <i class="bi bi-x-octagon-fill"></i> Stop Election
+                    </button>
+                </form>
+
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill"></i> No active election
+                </div>
+                <form method="POST" action="{{ url_for('start_election') }}">
+                    <button class="btn btn-success btn-ripple"
+                            onclick="startLoading(this)">
+                        <i class="bi bi-play-fill"></i> Start Election
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- EXPORT BUTTONS -->
+    <div class="d-flex gap-3 fade-slide">
+        <a href="{{ url_for('export_csv') }}" class="btn btn-outline-primary btn-ripple">
+            <i class="bi bi-filetype-csv"></i> Export CSV
+        </a>
+
+        <a href="{{ url_for('export_pdf') }}" class="btn btn-outline-secondary btn-ripple">
+            <i class="bi bi-file-earmark-pdf"></i> Export PDF
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

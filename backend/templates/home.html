@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+<style>
+/* --- Global Font --- */
+body {
+    font-family: "Inter", sans-serif;
+}
+
+/* --- Hero Section Layout --- */
+.hero-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 4rem;
+}
+
+/* --- Left Section --- */
+.hero-left {
+    flex: 1;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+}
+
+.hero-description {
+    font-size: 1.15rem;
+    color: #475569;
+    margin-bottom: 2rem;
+    max-width: 550px;
+    line-height: 1.7;
+}
+
+/* --- Buttons --- */
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: 0.3s ease;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+.btn-secondary {
+    background: #64748b;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #475569;
+}
+
+/* --- Right Section Floating Cards --- */
+.hero-right {
+    flex: 1;
+    position: relative;
+    min-height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.float-card {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    padding: 1rem 1.5rem;
+    border-radius: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    animation: float 3s ease-in-out infinite;
+    border: 1px solid rgba(255,255,255,0.4);
+}
+
+/* Positions */
+.card1 {
+    top: 18%;
+    left: 10%;
+}
+
+.card2 {
+    top: 50%;
+    right: 10%;
+}
+
+.card3 {
+    bottom: 18%;
+    left: 20%;
+}
+
+/* Floating Animation */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-12px); }
+}
+
+/* --- Responsive View --- */
+@media (max-width: 900px) {
+    .hero-container {
+        flex-direction: column;
+        text-align: center;
+        padding-top: 4rem;
+    }
+
+    .hero-buttons {
+        justify-content: center;
+    }
+
+    .hero-right {
+        min-height: 300px;
+    }
+}
+</style>
+
+<!-- MAIN CONTENT -->
+<div class="hero-container">
+
+    <!-- LEFT SECTION -->
+    <div class="hero-left">
+        <h1 class="hero-title">Welcome to Blockchain Voting System</h1>
+
+        <p class="hero-description">
+            A secure and transparent online voting platform powered by blockchain technology.
+        </p>
+
+        <div class="hero-buttons">
+            <a href="{{ url_for('register') }}" class="btn-primary">Register</a>
+            <a href="{{ url_for('login') }}" class="btn-secondary">Login</a>
+        </div>
+    </div>
+
+    <!-- RIGHT SECTION FLOATING CARDS -->
+    <div class="hero-right">
+
+        <div class="float-card card1">🔐 Secure Voting</div>
+        <div class="float-card card2">⛓️ Blockchain Verified</div>
+        <div class="float-card card3">🗳️ Transparent Results</div>
+
+    </div>
+
+</div>
+
+{% endblock %}

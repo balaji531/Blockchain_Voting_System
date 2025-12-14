@@ -1,0 +1,11 @@
+Flask
+Flask-Login
+Flask-SQLAlchemy
+mysqlclient
+web3
+python-dotenv
+passlib
+Flask-WTF
+WTForms
+Flask-Cors
+reportlab

@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+/* ------------------------------------
+   Page Background
+------------------------------------ */
+body {
+    background: linear-gradient(to bottom, #ffffff, #eef3f9, #dde5f2);
+    min-height: 100vh;
+}
+
+/* ------------------------------------
+   Main Vote Container
+------------------------------------ */
+.vote-container {
+    max-width: 700px;
+    padding: 35px;
+    border-radius: 18px;
+    margin: 40px auto;
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    animation: fadeSlide 0.8s ease forwards;
+    opacity: 0;
+}
+
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.vote-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+/* ------------------------------------
+   Candidate Card Grid
+------------------------------------ */
+.candidate-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+}
+
+/* ------------------------------------
+   Candidate Cards
+------------------------------------ */
+.candidate-card {
+    padding: 25px;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    border: 2px solid transparent;
+    text-align: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: 600;
+    transition: 0.25s ease;
+    animation: cardPop 0.7s ease forwards;
+    opacity: 0;
+}
+
+/* stagger animation */
+.candidate-card:nth-child(1) { animation-delay: 0.1s; }
+.candidate-card:nth-child(2) { animation-delay: 0.25s; }
+.candidate-card:nth-child(3) { animation-delay: 0.4s; }
+.candidate-card:nth-child(4) { animation-delay: 0.55s; }
+
+@keyframes cardPop {
+    from { transform: scale(0.9); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+.candidate-card:hover {
+    border-color: #5a9bff;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(90,155,255,0.25);
+}
+
+/* Selected card */
+.candidate-card.selected {
+    border-color: #007bff;
+    background: #eaf2ff;
+    box-shadow: 0 8px 25px rgba(0,123,255,0.35);
+}
+
+/* ------------------------------------
+   Vote Button
+------------------------------------ */
+.btn-ripple {
+    position: relative;
+    overflow: hidden;
+    font-size: 1.2rem;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 25px;
+}
+
+.btn-ripple::after {
+    content: "";
+    position: absolute;
+    background: rgba(255,255,255,0.4);
+    width: 0; height: 0;
+    border-radius: 50%;
+    transform: scale(0);
+}
+
+.btn-ripple:active::after {
+    width: 260px; height: 260px;
+    transform: scale(1);
+    transition: 0.45s;
+    opacity: 1;
+}
+
+.alert {
+    animation: fadeInAlert 0.4s ease;
+}
+
+@keyframes fadeInAlert {
+    from { opacity: 0; transform: translateY(-5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+
+<!-- ================================
+      MAIN VOTE UI
+================================ -->
+<div class="vote-container">
+
+    <h2 class="vote-title">🗳 Cast Your Vote</h2>
+
+    {% if not election %}
+        <div class="alert alert-warning">No active election at the moment.</div>
+
+    {% elif not election.is_active %}
+        <div class="alert alert-warning">Voting is currently <b>closed</b>.</div>
+
+    {% else %}
+
+    <form method="POST" id="voteForm">
+
+        <!-- Hidden input for backend -->
+        <input type="hidden" name="candidate" id="selectedCandidate" required>
+
+        <!-- 2x2 Candidate Grid -->
+        <div class="candidate-grid">
+            {% for c in candidates %}
+            <div class="candidate-card" data-id="{{ c.id }}">
+                {{ c.name }}
+                {% if c.party %}
+                <br><span style="font-size: 0.9rem; color: #666;">({{ c.party }})</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <button class="btn btn-primary w-100 btn-ripple" type="submit">
+            Cast Vote
+        </button>
+
+    </form>
+
+    <div id="result" class="mt-3"></div>
+
+    <script>
+    /* ------------------------------------
+       Candidate card selection logic
+    ------------------------------------ */
+    const cards = document.querySelectorAll(".candidate-card");
+    const hiddenInput = document.getElementById("selectedCandidate");
+
+    cards.forEach(card => {
+        card.addEventListener("click", () => {
+
+            // Remove all selected
+            cards.forEach(c => c.classList.remove("selected"));
+
+            // Mark clicked one
+            card.classList.add("selected");
+
+            // Set value for form submit
+            hiddenInput.value = card.dataset.id;
+        });
+    });
+
+
+    /* ------------------------------------
+       Vote Submission AJAX
+    ------------------------------------ */
+    document.getElementById("voteForm").onsubmit = async (e) => {
+        e.preventDefault();
+
+        if (!hiddenInput.value) {
+            document.getElementById("result").innerHTML =
+                "<div class='alert alert-danger'>Please select a candidate.</div>";
+            return;
+        }
+
+        const fd = new FormData(e.target);
+        const res = await fetch("", { method: "POST", body: fd });
+
+        let data;
+        try { data = await res.json(); }
+        catch {
+            document.getElementById("result").innerHTML =
+                "<div class='alert alert-danger'>Server error occurred.</div>";
+            return;
+        }
+
+        if (data.success) {
+            document.getElementById("result").innerHTML =
+                `<div class='alert alert-success'>Vote recorded!<br>Tx: ${data.tx_hash}</div>`;
+        } else {
+            document.getElementById("result").innerHTML =
+                `<div class='alert alert-danger'>${data.error}</div>`;
+        }
+    };
+    </script>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
